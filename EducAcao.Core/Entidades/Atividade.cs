@@ -4,12 +4,7 @@ namespace EducAcao.Core.Entidades;
 
 public class Atividade
 {
-    public int Id { get; private set; }
-    public string Titulo { get; private set; } = string.Empty;
-    public int VagasTotais { get; private set; }
-    public int IdadeMinima { get; private set; }
-    public Usuario Provedor { get; private set; } = null!;
-    public Usuario Admin { get; private set; } = null!;
+    private const int TamanhoMinimoCaracteresTitulo = 10;
 
     protected Atividade()
     {
@@ -24,11 +19,18 @@ public class Atividade
         Admin = admin;
     }
 
+    public int Id { get; private set; }
+    public string Titulo { get; private set; } = string.Empty;
+    public int VagasTotais { get; private set; }
+    public int IdadeMinima { get; private set; }
+    public Usuario Provedor { get; private set; } = null!;
+    public Usuario Admin { get; private set; } = null!;
+
     private void ValidarIdadeMinima(int idadeMinima)
     {
         if (idadeMinima < 6)
             throw new CoreException("A idade mínima não pode ser inferior a 6 anos!");
-        
+
         IdadeMinima = idadeMinima;
     }
 
@@ -36,7 +38,7 @@ public class Atividade
     {
         if (vagasTotais < 1)
             throw new CoreException("O número de vagas não pode ser inferior a 1!");
-        
+
         VagasTotais = vagasTotais;
     }
 
@@ -48,10 +50,9 @@ public class Atividade
         titulo = titulo.Trim();
 
         if (titulo.Length < TamanhoMinimoCaracteresTitulo)
-            throw new CoreException($"O título da atividade deve conter no mínimo {TamanhoMinimoCaracteresTitulo} caracteres!");
-        
+            throw new CoreException(
+                $"O título da atividade deve conter no mínimo {TamanhoMinimoCaracteresTitulo} caracteres!");
+
         Titulo = titulo;
     }
-
-    private const int TamanhoMinimoCaracteresTitulo = 10;
 }
