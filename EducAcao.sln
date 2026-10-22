@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EducAcao.Core", "EducAcao.Core\EducAcao.Core.csproj", "{8550DBEC-C8BC-4FBB-8CB5-6ECB143F99FD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EducAcao.Api", "EducAcao.Api\EducAcao.Api.csproj", "{6884E25F-3C0B-46CC-8295-BFE94D4D47E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{8550DBEC-C8BC-4FBB-8CB5-6ECB143F99FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8550DBEC-C8BC-4FBB-8CB5-6ECB143F99FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8550DBEC-C8BC-4FBB-8CB5-6ECB143F99FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6884E25F-3C0B-46CC-8295-BFE94D4D47E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6884E25F-3C0B-46CC-8295-BFE94D4D47E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6884E25F-3C0B-46CC-8295-BFE94D4D47E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6884E25F-3C0B-46CC-8295-BFE94D4D47E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
