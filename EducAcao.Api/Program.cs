@@ -1,6 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using EducAcao.Api.Dados;
-using EducAcao.Api.DTos;
+using EducAcao.Api.DTOs;
 using EducAcao.Core.Entidades;
 using EducAcao.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
@@ -35,8 +34,6 @@ app.MapPost("/usuario", (CadastroUsuarioDto requisicao) =>
 {
     try
     {
-
-
         var novoUsuario = new Usuario(requisicao.Nome, email: requisicao.Email, requisicao.Senha,
             requisicao.DataNascimento);
         return Results.Created(string.Empty, new

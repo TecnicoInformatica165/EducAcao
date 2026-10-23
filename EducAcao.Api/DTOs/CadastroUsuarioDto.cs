@@ -1,4 +1,4 @@
-namespace EducAcao.Api.DTos;
+namespace EducAcao.Api.DTOs;
 
 public class CadastroUsuarioDto
 {
