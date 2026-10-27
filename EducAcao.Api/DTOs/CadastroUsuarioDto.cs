@@ -1,3 +1,5 @@
+using System;
+
 namespace EducAcao.Api.DTOs;
 
 public class CadastroUsuarioDto
