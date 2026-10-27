@@ -12,9 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 var stringConexao = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddMySql<DbContexto>
-    (stringConexao, ServerVersion.AutoDetect
-    (stringConexao));
+builder.Services.AddMySql<DbContexto>(stringConexao, ServerVersion.AutoDetect(stringConexao));
 
 //Cadastro de Servicos Customizados
 builder.Services.AddScoped<UsuarioServicos>();
@@ -22,10 +20,7 @@ builder.Services.AddScoped<UsuarioServicos>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.UseHttpsRedirection();
 
@@ -58,11 +53,9 @@ app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos UsuarioServic
     {
         return Results.NotFound(new { Mensagem = ex.Message });
     }
-    catch 
+    catch
     {
         return Results.Problem("Ocorreu um erro desconhecido, tente novamete mais tarde.", "Erro no servidor!", 500);
     }
 });
 app.Run();
-
-
