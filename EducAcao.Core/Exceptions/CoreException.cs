@@ -2,4 +2,5 @@
 
 public class CoreException(string mensagem) : Exception(mensagem)
 {
+    
 }

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace EducAcao.Api.Migrations
 {
-    [DbContext(typeof(ApiContexto))]
+    [DbContext(typeof(DbiContexto))]
     partial class ApiContextoModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

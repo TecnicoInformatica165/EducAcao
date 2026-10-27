@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace EducAcao.Api.Migrations
 {
-    [DbContext(typeof(ApiContexto))]
+    [DbContext(typeof(DbiContexto))]
     [Migration("20261023222230_MigracaoInicial")]
     partial class MigracaoInicial
     {
