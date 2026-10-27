@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EducAcao.Api.Dados;
 
-public class ApiContexto(DbContextOptions<ApiContexto> opcoesContexto) : DbContext(opcoesContexto)
+public class DbContexto(DbContextOptions<DbContexto> opcoesContexto) : DbContext(opcoesContexto)
 {
     public DbSet<Usuario> Usuarios { get; set; }
 }
