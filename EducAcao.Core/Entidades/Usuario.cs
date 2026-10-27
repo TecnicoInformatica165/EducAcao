@@ -28,6 +28,7 @@ public class Usuario
     public string Email { get; private set; } = string.Empty;
     public string Senha { get; private set; } = string.Empty;
     public DateOnly Nascimento { get; private set; }
+    
 
     private void ValidarNascimento(DateOnly nascimento)
     {
