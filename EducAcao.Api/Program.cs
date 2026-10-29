@@ -7,19 +7,19 @@ using EducAcao.Core.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var stringConexao = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddMySql<DbContexto>(stringConexao, ServerVersion.AutoDetect(stringConexao));
+builder.Services.AddMySql<DbContexto>(
+    stringConexao, 
+    ServerVersion.AutoDetect(stringConexao)
+);
 
-//Cadastro de Servicos Customizados
+// Cadastro de Servicos Customizados
 builder.Services.AddScoped<UsuarioServicos>();
-
 builder.Services.AddScoped<TokenServico>();
 
 var app = builder.Build();
@@ -29,15 +29,18 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
 app.UseHttpsRedirection();
 
-//cria usuario
-app.MapPost("/usuario", async (CadastroUsuarioDto body,
-    UsuarioServicos usuarioServicos) =>
+// IMPORTANTE: Adicione estes dois se for usar autenticação com Token
+// app.UseAuthentication();
+// app.UseAuthorization();
+
+// Cria usuario
+app.MapPost("/usuario", async (CadastroUsuarioDto body, UsuarioServicos usuarioServicos) =>
 {
     try
     {
         var novoUsuario = new Usuario(body.Nome, body.Email, body.Senha, body.DataNascimento);
         await usuarioServicos.AdicionaAsync(novoUsuario);
-        return Results.Created();
+        return Results.Created($"/usuario/{novoUsuario.Id}", new { Mensagem = "Usuário criado com sucesso!" });
     }
     catch (CoreException ex)    
     {
@@ -45,14 +48,26 @@ app.MapPost("/usuario", async (CadastroUsuarioDto body,
     }
 });
 
-//login
-app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos UsuarioServicos) =>
+// Login
+app.MapPost("/login", async (
+    LoginUsuarioDto body,
+    UsuarioServicos usuarioServicos,
+    TokenServico tokenServico) =>
 {
     try
     {
-        var usuarioEncontrado = await UsuarioServicos.BuscarPorEmailAsync(body.Email);
-        if (usuarioEncontrado.Senha != body.Senha) return Results.BadRequest("Usuario ou senha estão errados!");
-        return Results.Ok();
+        var usuarioEncontrado = await usuarioServicos.BuscarPorEmailAsync(body.Email);
+
+        if (usuarioEncontrado.Senha != body.Senha)
+            return Results.BadRequest(new { Mensagem = "Usuário ou senha estão errados!" });
+
+        var token = tokenServico.GerarToken(
+            usuarioEncontrado.Id,
+            usuarioEncontrado.Email,
+            usuarioEncontrado.Nome
+        );
+
+        return Results.Ok(new { Token = token });
     }
     catch (UsuarioNaoEncontradoException ex)
     {
@@ -60,7 +75,13 @@ app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos UsuarioServic
     }
     catch
     {
-        return Results.Problem("Ocorreu um erro desconhecido, tente novamete mais tarde.", "Erro no servidor!", 500);
+        return Results.Problem(
+            detail: "Ocorreu um erro desconhecido, tente novamente mais tarde.",
+            title: "Erro no servidor!",
+            statusCode: 500
+        );
     }
 });
+ 
+// O comando correto em C# é com ponto e parênteses:
 app.Run();
