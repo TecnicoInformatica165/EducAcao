@@ -1,9 +1,12 @@
+using System.Security.Claims;
+using System.Text;
 using EducAcao.Api.Dados;
 using EducAcao.Api.DTOs;
 using Educacao.Api.Servicos;
 using EducAcao.Api.Servicos;
 using EducAcao.Core.Entidades;
 using EducAcao.Core.Exceptions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -11,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,11 +32,40 @@ builder.Services.AddScoped<UsuarioServicos>();
 
 builder.Services.AddScoped<TokenServico>();
 
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var chaveSecreta = Encoding.UTF8.GetBytes(jwtSettings["SecretKey"] ?? "23bMhZU^WtE8Mw0~YU_115LH$dgw!|Bl");
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidIssuer = jwtSettings["Issuer"],
+
+            ValidateAudience = false,
+            ValidAudience = jwtSettings["Audience"],
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(chaveSecreta),
+
+            ValidateLifetime = true
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 
 app.MapPost("/usuario", async (CadastroUsuarioDto requisicao, UsuarioServicos usuarioServicos) =>
@@ -78,5 +111,22 @@ app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos usuarioServic
                 "Erro no servidor!",500); 
         }
     });
+
+app.MapGet("/perfil", (ClaimsPrincipal usuario) =>
+    {
+        // Extrai as claims que foram gravadas no Token no momento do Login
+        var id = usuario.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var email = usuario.FindFirst(ClaimTypes.Email)?.Value;
+        var nome = usuario.Identity?.Name;
+
+        return Results.Ok(new
+        {
+            Mensagem = "Você acessou uma rota protegida!",
+            UsuarioId = id,
+            Email = email,
+            Nome = nome
+        });
+    })
+    .RequireAuthorization();
 
     app.Run();
