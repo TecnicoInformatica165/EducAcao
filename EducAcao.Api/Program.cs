@@ -15,9 +15,12 @@ var stringConexao = builder.Configuration.GetConnectionString("DefaultConnection
 builder.Services.AddMySql<DbContexto>(stringConexao, ServerVersion.AutoDetect(stringConexao));
 
 //Cadastro de Servicos Customizados
+// Cadastro de serviços
 builder.Services.AddScoped<UsuarioServicos>();
+builder.Services.AddScoped<TokenServico>();
 
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
@@ -25,8 +28,7 @@ if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.UseHttpsRedirection();
 
 //cria usuario
-app.MapPost("/usuario", async (CadastroUsuarioDto body,
-    UsuarioServicos usuarioServicos) =>
+app.MapPost("/usuario", async (CadastroUsuarioDto body, UsuarioServicos usuarioServicos) =>
 {
     try
     {
@@ -41,13 +43,23 @@ app.MapPost("/usuario", async (CadastroUsuarioDto body,
 });
 
 //login
-app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos UsuarioServicos) =>
+app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos usuarioServicos, TokenServico tokenServico) =>
 {
     try
     {
-        var usuarioEncontrado = await UsuarioServicos.BuscarPorEmailAsync(body.Email);
+        var usuarioEncontrado = await usuarioServicos.BuscarPorEmailAsync(body.Email);
+
         if (usuarioEncontrado.Senha != body.Senha) return Results.BadRequest("Usuario ou senha estão errados!");
-        return Results.Ok();
+
+        if (usuarioEncontrado.Senha != body.Senha)
+            return Results.BadRequest("Usuário ou senha estão errados!");
+
+        var token = tokenServico.GerarToken(
+            usuarioEncontrado.Id.ToString(),
+            usuarioEncontrado.Email,
+            usuarioEncontrado.Nome);
+
+        return Results.Ok(new { Token = token });
     }
     catch (UsuarioNaoEncontradoException ex)
     {
@@ -55,7 +67,9 @@ app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos UsuarioServic
     }
     catch
     {
-        return Results.Problem("Ocorreu um erro desconhecido, tente novamete mais tarde.", "Erro no servidor!", 500);
+        return Results.Problem(
+            "Ocorreu um erro desconhecido, tente novamente mais tarde.");
     }
+
 });
 app.Run();
