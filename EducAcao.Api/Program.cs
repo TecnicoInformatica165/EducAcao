@@ -1,11 +1,17 @@
+using System.Text;
 using EducAcao.Api.Dados;
 using EducAcao.Api.DTOs;
 using EducAcao.Api.Servicos;
+using EducAcao.Api.Servicos.Servicos;
 using EducAcao.Core.Entidades;
 using EducAcao.Core.Exceptions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<TokenServico>();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -16,6 +22,31 @@ builder.Services.AddMySql<DbContexto>
     (stringConexao, ServerVersion.AutoDetect
     (stringConexao));
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    var jwtKey = Environment.GetEnvironmentVariable("CHAVE_JWT") ??
+                 throw new InvalidOperationException("A chave JWT não foi configurada!");
+    
+    var key = Encoding.UTF8.GetBytes(jwtKey);
+    
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+    
 //Cadastro de Servicos Customizados
 builder.Services.AddScoped<UsuarioServicos>();
 
@@ -52,7 +83,9 @@ app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos UsuarioServic
     {
         var usuarioEncontrado = await UsuarioServicos.BuscarPorEmailAsync(body.Email);
         if (usuarioEncontrado.Senha != body.Senha) return Results.BadRequest("Usuario ou senha estão errados!");
-        return Results.Ok();
+        
+        var token = TokenServico.GerarToken(usuarioEncontrado);
+        return Results.Ok(new { Token = token });
     }
     catch (UsuarioNaoEncontradoException ex)
     {
