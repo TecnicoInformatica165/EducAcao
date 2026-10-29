@@ -1,5 +1,6 @@
 using EducAcao.Api.Dados;
 using EducAcao.Api.DTOs;
+using Educacao.Api.Servicos;
 using EducAcao.Api.Servicos;
 using EducAcao.Core.Entidades;
 using EducAcao.Core.Exceptions;
@@ -25,6 +26,8 @@ builder.Services.AddMySql<DbContexto>(stringConexao, ServerVersion.AutoDetect(st
 //Cadastro de Servicos Customizados
 builder.Services.AddScoped<UsuarioServicos>();
 
+builder.Services.AddScoped<TokenServico>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -41,11 +44,7 @@ app.MapPost("/usuario", async (CadastroUsuarioDto requisicao, UsuarioServicos us
             requisicao.DataNascimento);
         await usuarioServicos.AdicionaAsync(novoUsuario);
         
-        return Results.Created(string.Empty, new
-        {
-
-            Usuario = requisicao
-        });
+        return Results.Created();
     }
     catch (CoreException ex)
     {
@@ -62,9 +61,12 @@ app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos usuarioServic
     {
         var usuarioEncontrado = await usuarioServicos.BuscaPorEmailAsync(body.Email);
         if (usuarioEncontrado.Senha != body.Senha)
+        {
             return Results.BadRequest("Usuario ou senha estão errados!");
+        }
 
-        return Results.Ok();
+        var token = TokenServico.GerarToken(usuarioEncontrado);
+        return Results.Ok(new { Token = token});
     }
         catch (UsuarioNaoEncontradoException ex)
         {
