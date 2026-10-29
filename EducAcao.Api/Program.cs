@@ -115,20 +115,17 @@ app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos UsuarioServic
 });
 
 //validar token
-app.MapGet("/perfil", (ClaimsPrincipal Usuario) =>
+app.MapGet("/perfil", (ClaimsPrincipal usuario) =>
     {
 
         // 2. Buscar o ID do usuário (NameIdentifier)
-        string usuarioId = Usuario.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var usuarioId = usuario.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         // 3. Buscar o e-mail do usuário
-        string email = Usuario.FindFirst(ClaimTypes.Email)?.Value;
-
-        // 4. Buscar uma Claim personalizada (ex: "Idade")
-        string idade = Usuario.FindFirst("Idade")?.Value;
+        var email = usuario.FindFirst(ClaimTypes.Email)?.Value;
 
         // 5. Verificar se o usuário possui uma Role específica
-        bool ehAdmin = Usuario.IsInRole("Admin");
+        var ehAdmin = usuario.IsInRole("Admin");
 
         return Results.Ok(new { usuarioId, email, ehAdmin });
     })
