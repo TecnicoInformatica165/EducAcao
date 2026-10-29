@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using EducAcao.Api.Dados;
 using EducAcao.Api.DTOs;
@@ -22,6 +23,14 @@ builder.Services.AddMySql<DbContexto>
     (stringConexao, ServerVersion.AutoDetect
     (stringConexao));
 
+if (string.IsNullOrWhiteSpace(TokenServico.Chave) ||
+    string.IsNullOrWhiteSpace(TokenServico.Emissor) ||
+    string.IsNullOrWhiteSpace(TokenServico.Audiencia))
+{
+    throw new InvalidOperationException(
+        "As variáveis de ambiente do JWT não foram configuradas.");
+}
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -29,10 +38,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    var jwtKey = Environment.GetEnvironmentVariable("CHAVE_JWT") ??
-                 throw new InvalidOperationException("A chave JWT não foi configurada!");
-    
-    var key = Encoding.UTF8.GetBytes(jwtKey);
+    var key = Encoding.UTF8.GetBytes(TokenServico.Chave);
     
     options.RequireHttpsMetadata = false;
     options.SaveToken = true;
@@ -41,7 +47,9 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
         ValidateIssuer = true,
+        ValidIssuer =  TokenServico.Emissor,
         ValidateAudience = true,
+        ValidAudience =  TokenServico.Audiencia,
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
@@ -49,6 +57,12 @@ builder.Services.AddAuthentication(options =>
     
 //Cadastro de Servicos Customizados
 builder.Services.AddScoped<UsuarioServicos>();
+builder.Services.AddAuthorization(options =>
+{
+    // Exemplo: Criando uma regra/permissão chamada "ApenasAdmin"
+    // Ela exige que o usuário tenha um carimbo (Claim) do tipo Role com o valor "Admin"
+    options.AddPolicy("ApenasAdmin", policy => policy.RequireRole("Admin"));
+});
 
 var app = builder.Build();
 
@@ -58,6 +72,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 
 //cria usuario
@@ -95,7 +111,12 @@ app.MapPost("/login", async (LoginUsuarioDto body, UsuarioServicos UsuarioServic
     {
         return Results.Problem("Ocorreu um erro desconhecido, tente novamete mais tarde.", "Erro no servidor!", 500);
     }
+    
 });
+
+//validar token
+app.MapGet("/perfil", () => "Se você está vendo isso, a API descobriu quem você é!")
+    .RequireAuthorization();
 app.Run();
 
 

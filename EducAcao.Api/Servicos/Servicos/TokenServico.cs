@@ -4,47 +4,38 @@ using System.Text;
 using EducAcao.Core.Entidades;
 using Microsoft.IdentityModel.Tokens;
 
-namespace EducAcao.Api.Servicos.Servicos
+namespace EducAcao.Api.Servicos.Servicos;
+
+public class TokenServico
 {
-    public class TokenServico
+    public static string Chave { get; } = Environment.GetEnvironmentVariable("CHAVE_JWT") ?? string.Empty;
+    public static string Emissor { get; } = Environment.GetEnvironmentVariable("EMISSOR_JWT") ?? string.Empty;
+    public static string Audiencia { get; } = Environment.GetEnvironmentVariable("AUDIENCIA_JWT") ?? string.Empty;
+
+    public static string GerarToken(Usuario usuario)
     {
-        public static string GerarToken(Usuario usuario)
+        var chaveBytes = Encoding.UTF8.GetBytes(Chave);
+        var chaveSegura = new SymmetricSecurityKey(chaveBytes);
+
+        var credenciais = new SigningCredentials(
+            chaveSegura,
+            SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
         {
-            var chave = Environment.GetEnvironmentVariable("CHAVE_JWT");
-            var emissor = Environment.GetEnvironmentVariable("EMISSOR_JWT");
-            var audiencia = Environment.GetEnvironmentVariable("AUDIENCIA_JWT");
+            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+            new Claim(ClaimTypes.Email, usuario.Email),
+            new Claim(ClaimTypes.Name, usuario.Nome),
+        };
 
-            if (string.IsNullOrWhiteSpace(chave) ||
-                string.IsNullOrWhiteSpace(emissor) ||
-                string.IsNullOrWhiteSpace(audiencia))
-            {
-                throw new InvalidOperationException(
-                    "As variáveis de ambiente do JWT não foram configuradas.");
-            }
+        var token = new JwtSecurityToken(
+            issuer: Emissor,
+            audience: Audiencia,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(2),
+            signingCredentials: credenciais
+        );
 
-            var chaveBytes = Encoding.UTF8.GetBytes(chave);
-            var chaveSegura = new SymmetricSecurityKey(chaveBytes);
-
-            var credenciais = new SigningCredentials(
-                chaveSegura,
-                SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                new Claim(ClaimTypes.Email, usuario.Email),
-                new Claim(ClaimTypes.Name, usuario.Nome),
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: emissor,
-                audience: audiencia,
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: credenciais
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
