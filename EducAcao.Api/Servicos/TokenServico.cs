@@ -7,15 +7,15 @@ namespace EducAcao.Api.Servicos;
 
 public class TokenServico
 {
+    public static string Chave { get; } = Environment.GetEnvironmentVariable("CHAVE_JWT") ?? string.Empty;
+    public static string Emissor { get; } = Environment.GetEnvironmentVariable("EMISSOR_JWT")?? string.Empty;
+    public static string Audiencia { get; } = Environment.GetEnvironmentVariable("AUDIENCIA_JWT")?? string.Empty;
+    
     public string GerarToken(string id, string email, string nome)
     {
-        var chaveJwt = Environment.GetEnvironmentVariable("CHAVE_JWT");
-        var emissor = Environment.GetEnvironmentVariable("EMISSOR_JWT");
-        var audiencia = Environment.GetEnvironmentVariable("AUDIENCIA_JWT");
-
-        if (string.IsNullOrWhiteSpace(chaveJwt) ||
-            string.IsNullOrWhiteSpace(emissor) ||
-            string.IsNullOrWhiteSpace(audiencia))
+        if (string.IsNullOrWhiteSpace(Chave) ||
+            string.IsNullOrWhiteSpace(Emissor) ||
+            string.IsNullOrWhiteSpace(Audiencia))
         {
             throw new InvalidOperationException(
                 "Configure as variáveis de ambiente do JWT.");
@@ -29,15 +29,15 @@ public class TokenServico
         };
 
         var chave = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(chaveJwt));
+            Encoding.UTF8.GetBytes(Chave));
 
         var credenciais = new SigningCredentials(
             chave,
             SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: emissor,
-            audience: audiencia,
+            issuer: Emissor,
+            audience: Audiencia,
             claims: claims,
             expires: DateTime.UtcNow.AddHours(2),
             signingCredentials: credenciais
